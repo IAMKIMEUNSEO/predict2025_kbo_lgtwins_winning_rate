@@ -52,5 +52,32 @@
     - 불리한 환경에서의 전술 변화, 특정 구장에서의 선수 전략 수정 등 다양한 방향으로 경기력 향상을 위한 참고 자료로 활용 가능
 
 ## 4. 분석 - 데이터
-본격적인 예측에 앞서, 엘지트윈스의 구단별 승률(2015~2024)를 분석해보았다. 눈에 띄는 기록은, 두산을 상대로 2015년부터 하락세를 보이면서 2018년 가장 낮은 승률(6.25%)을 기록했다.하지만 그 이후 꾸준한 상승세를 보이고 있다. 2019년과 2020년에는 각각 KT와 SSG를 상대로 81.25%의 승률을 기록했다. 기아를 상대로는 2022년 부터 승률이 떨어지고 있으며 한화를 상대로는 비교적 높은 승률을 보이고 있다.
-![엘지트윈스의 구단별 승률(2015~2024)](/predict2025_kbo_lgtwins_winning_rate/graph_img/plot_lgtwinsWinRate2015to2024.png)
+본격적인 예측에 앞서, 엘지트윈스의 구단별 승률(2015~2024)를 분석해보았다. 눈에 띄는 기록은, 두산을 상대로 2015년부터 하락세를 보이면서 2018년 가장 낮은 승률(6.25%)을 기록했다.하지만 그 이후 꾸준한 상승세를 보이고 있다. 2019년과 2020년에는 각각 KT와 SSG를 상대로 81.25%의 승률을 기록했다. 기아를 상대로는 2022년 부터 승률이 떨어지고 있으며 한화를 상대로는 비교적 높은 승률을 보이고 있다.<br>
+![엘지트윈스의 구단별 승률(2015~2024)](graph_img/plot_lgtwinsWinRate2015to2024.png)
+
+## 5. 분석 - 승률 예측
+- 컬럼 'W'(승 수) / 컬럼 'GS'(게임 수) * 100을 계산하여 승률 컬럼인 'winning_rate' 생성
+- 승률에 영향을 미치는 주요 특성 파악
+    - `RandomForestRegressor`를 활용하여 변수 중요도를 분석
+    - 독립변수: `df_team.loc[:, 'S':'ERA']`
+    - 종속변수: `df_team['winning_rate']`
+    - 특성 중요도 상위 15개 확인
+    ```python
+    importances = rf.feature_importances_
+    feature_names = train_input.columns
+
+    #랜덤 포레스트 변수 중요도
+    importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+    importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+    #상위 15개 선택
+    selected_features = importance_df['Feature'].head(15).tolist()
+    selected_features   #RS, OPS, ERA, RS9, AVG, R, S, IP, WHIP, ER, HR, SO, H, SF, OBP
+    ```
+    - 상위 15개 특성을 투수/타자 항목으로 분류
+        - 투타조화 고려
+        - 각각 상위 5개를 선택해서 승률에 가장 영향을 미치는 요인으로 선정
+        |   분류    |   지표    |
+        |:---:|---|
+        |투수|RS(득점지원), RS9(9이닝당 득점지원), R(득점), HR(홈런), H(안타), SF(희생플라이)|
+        |타자|OPS(피OPS), ERA(평균자책점), AVG(피안타율), S(홀드), IP(이닝), WHIP(이닝당 출루 허용률), ER(자책점), SO(삼진), OBP(피출루율)|
