@@ -101,7 +101,7 @@
     x_game = game   #게임수
     y_record = record   #기록('RS', 'RS9', 'R', 'HR', 'H', 'OPS', 'ERA', 'AVG', 'S', 'IP')
     ```
-    - **`LinearRegression`**을 활용하여 모델을 생성하고 학습
+    - <b>`LinearRegression`</b>을 활용하여 모델을 생성하고 학습
     ```python
     #기록 예측 모델
     model_record = LinearRegression()   #생성
@@ -113,14 +113,14 @@
     pred_record = model_record.predict([df_kiaH[['G', 'GS', 'W', 'L']].mean().values])[0]  #평균
     pred_RS, pred_RS9, pred_R, pred_HR, pred_H, pred_OPS, pred_ERA, pred_AVG, pred_S, pred_IP = pred_record
     ```
-- **2025년 홈·원정 승률 파악**
+- **2025년 구장별 승률 파악**
     - 독립변수: 선정한 투타지표 10개 (RS, RS9, HR, H, OPS, ERA, AVG, S, IP)
     - 종속변수: winning_rate
     ```python
     x = record  #RS, RS9, HR, H, OPS, ERA, AVG, S, IP
     y = winning_rate    #승률
     ```
-    - **`LinearRegression`**을 활용하여 모델을 생성하고 학습
+    - <b>`LinearRegression`</b>을 활용하여 모델을 생성하고 학습
     ```python
     model_winning_rate = LinearRegression() #생성
     model_winning_rate.fit(x, y)    #학습
@@ -143,7 +143,73 @@
 
 |그래프|분석|
 |:---:|---|
-|![2025년 구단별 홈과 원정 승률 예측 비교](/graph_img/bar_lgtwinsHome&Away2025WinRatePrediction.png)|**홈 승률(50% 기준)**<br>    - 평균 54.35%<br>   - ↑: 케이티(61.59%), 삼성(57.88%), 롯데(57.38%), 키움(56.92%), 한화(56.09%), 기아(56.09%), 쓱(52.56%), 엔씨(51.75%)<br> - ↓: 두산(39.88%)<br><br>**원정 승률(50% 기준)**<br>  - 평균: 46.98%<br>  - ↑: 케이티(56.45%), 한화(56.27%), 엔씨(50.16%), 키움(50.12%)<br>   - ↓: 롯데(45.99%), 쓱(46.17%), 기아(46.98%), 두산(47.70%), 삼성(48.55%)<br><br>**홈·원정 승률 차이**<br>  - 홈↑: 롯데(11.39%), 삼성(9.33%), 기아(8.10%), 키움(6.80%), 쓱(6.39%), 케이티(5.14%), 엔씨(1.59%)<br>   - 원정↑: 두산(-7.82%), 한화(-0.18%)<br> - 전체적으로 원정보다 홈 승률이 높은 경우가 더 많음<br> - 절댓값: 롯데(11.39%), 삼성(9.33%), 기아(8.10%), 두산(7.82%), 키움(6.80%), 쓱(6.39%), 케이티(5.14%), 엔씨(1.59%), 한화(0.18%)|
+|![2025년 구단별 홈과 원정 승률 예측 비교](/graph_img/bar_lgtwinsHome&Away2025WinRatePrediction.png)|**홈 승률(50% 기준)**<br>    - 평균 54.35%<br>   - ↑: 케이티(61.59%), 삼성(57.88%), 롯데(57.38%), 키움(56.92%), 한화(56.09%), 기아(56.09%), 쓱(52.56%), 엔씨(51.75%)<br> - ↓: 두산(39.88%)<br><br>**원정 승률(50% 기준)**<br>  - 평균: 46.98%<br>  - ↑: 케이티(56.45%), 한화(56.27%), 엔씨(50.16%), 키움(50.12%)<br>   - ↓: 롯데(45.99%), 쓱(46.17%), 기아(46.98%), 두산(47.70%), 삼성(48.55%)<br><br>**구장별 승률 차이**<br>  - 홈↑: 롯데(11.39%), 삼성(9.33%), 기아(8.10%), 키움(6.80%), 쓱(6.39%), 케이티(5.14%), 엔씨(1.59%)<br>   - 원정↑: 두산(-7.82%), 한화(-0.18%)<br> - 전체적으로 원정보다 홈 승률이 높은 경우가 더 많음<br> - 절댓값: 롯데(11.39%), 삼성(9.33%), 기아(8.10%), 두산(7.82%), 키움(6.80%), 쓱(6.39%), 케이티(5.14%), 엔씨(1.59%), 한화(0.18%)|
 
+## 7. 시리즈(주중·주말)별 승률
+### (1) 승률 예측 과정
+- **승률에 영향을 미치는 투타지표 예측**
+    - 구단에 따른 구장별 기록을 웹스크롤링해서 데이터프레임으로 변환한 후, 홈과 원정으로 데이터프레임을 분리
+    ```python
+    df_kia_sun = df_kia_day.iloc[:10, 1:]    #일요일
+    df_kia_tue = df_kia_day.iloc[10:20, 1:]  #화요일
+    df_kia_wed = df_kia_day.iloc[20:30, 1:]  #수요일
+    df_kia_thu = df_kia_day.iloc[30:38, 1:]  #목요일
+    df_kia_fri = df_kia_day.iloc[38:47, 1:]  #금요일
+    df_kia_sat = df_kia_day.iloc[47:, 1:]    #토요일
 
+    df_kia_weekdays = pd.concat([df_kia_tue, df_kia_wed, df_kia_thu], axis=0)   #주중 시리즈 결합
+    df_kia_weekends = pd.concat([df_kia_fri, df_kia_sat, df_kia_sun], axis=0)   #주말 시리즈 결합
+    ```
+    - 독립변수: G, GS, W, L
+    - 종속변수: 선정한 투타 지표 10개(RS, RS9, R, HR, H, OPS, ERA, AVG, S, IP)
+    ```python
+    game = np.array(df_kiaH[['G', 'GS', 'W', 'L']]) #(출장, 게임, 승, 패)
+    record = np.array(df_kiaH.iloc[:, :-5]) #기록('RS', 'RS9', 'R', 'HR', 'H', 'OPS', 'ERA', 'AVG', 'S', 'IP')
+    winning_rate = np.array(df_kiaH['winning_rate']) #승률
 
+    x_game = game   #게임수
+    y_record = record   #기록('RS', 'RS9', 'R', 'HR', 'H', 'OPS', 'ERA', 'AVG', 'S', 'IP')
+    ```
+    - <b>`LinearRegression`</b>을 활용하여 모델을 생성하고 학습
+    ```python
+    #기록 예측 모델
+    model_record = LinearRegression()   #생성
+    model_record.fit(x_game, y_record)   #학습
+    ```
+    - 독립변수의 평균값으로 2015년 기록을 예측
+    ```python
+    #2025년 기록 예측
+    pred_record = model_record.predict([df_kiaH[['G', 'GS', 'W', 'L']].mean().values])[0]  #평균
+    pred_RS, pred_RS9, pred_R, pred_HR, pred_H, pred_OPS, pred_ERA, pred_AVG, pred_S, pred_IP = pred_record
+    ```
+- **2025년 시리즈별 승률 파악**
+    - 독립변수: 선정한 투타지표 10개 (RS, RS9, HR, H, OPS, ERA, AVG, S, IP)
+    - 종속변수: winning_rate
+    ```python
+    x = record  #RS, RS9, HR, H, OPS, ERA, AVG, S, IP
+    y = winning_rate    #승률
+    ```
+    - <b>`LinearRegression`</b>을 활용하여 모델을 생성하고 학습
+    ```python
+    model_winning_rate = LinearRegression() #생성
+    model_winning_rate.fit(x, y)    #학습
+    ```
+    - 위에서 예측한 2025년 기록으로 2025년 승률 예측
+    ```python
+    #예측 데이터
+    pred_x = np.array([[
+        pred_RS, pred_RS9, pred_R, pred_HR, pred_H,
+        pred_OPS, pred_ERA, pred_AVG, pred_S, pred_IP
+    ]])
+
+    #승률 예측
+    predicted_kia_weekdays = model_winning_rate.predict(pred_x)[0].round(2)
+    print(f"2025년 승률 예측: {predicted_kia_weekdays:}")   #2025년 승률 예측: 49.11
+    ```
+
+### (2) 분석
+- 야구는 결과(승/패)가 중요함으로 50%를 기준으로 예측 승률 분석
+
+|그래프|분석|
+|:---:|---|
+|![2025년 구단별 홈과 원정 승률 예측 비교](/graph_img/bar_lgtwinsSeries2025WinRatePrediction.png)|**홈 승률(50% 기준)**<br>    - 평균 52.46%<br>   - ↑: ↑: 엔씨(61.73%), 케이티(61.55%), 한화(56.55%), 롯데(54.17%), 삼성(51.61%), 쓱(50.86%)<br>- ↓: 두산(36.86%), 기아(49.11%), 키움(49.7%)<br><br>**원정 승률(50% 기준)**<br>  - 평균: 50.76%<br>  - ↑: 삼성(57.37%), 키움(57.36%), 케이티(53.84%), 한화(51.14%), 기아(50.14%)<br>   - ↓: 두산(44.19%), 엔씨(46.92%), 롯데(47.99%), 쓱(47.99%)<br><br>**시리즈별 승률 차이**<br>  - 주중↑: 쓱(2.87%), 한화(5.41%), 롯데(6.32%), 케이티(7.71%), 엔씨(14.81%)<br>   주말↑: 키움(-7.65%), 두산(-7.33%), 삼성(-5.76%), 기아(-1.03%)<br> - 시리즈별 승률 차이 개수는 비슷<br> - 절댓값: 엔씨(14.81%), 케이티(7.71%), 키움(5.76%), 한화(5.41%), 쓱(2.87%), 기아(1.03%)|
