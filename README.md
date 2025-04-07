@@ -6,12 +6,12 @@
     - 경기 결과의 예측 불가능성으로 인한 관람 만족도 저하
     - 데이터 활용을 통한 전략적 예매로 시간과 비용의 효율성 제고
 - **목표**
-    - 엘지트윈의 경기 승률에 영향을 미치는 요인 파악악
+    - 엘지트윈의 경기 승률에 영향을 미치는 요인 파악
     - 2025년 엘지트윈스의 상대 구단에 따른 구장(홈·원정)별·시리즈(주중·주말)별 경기 승률
 - **기대효과**
     - 팬의 합리적인 관람 결정을 위한 정보 제공
     - 경기 관람 만족도와 팀 응원 몰입도 향상
-    - 경기 전략 개선을 위한 데이터 활용용
+    - 경기 전략 개선을 위한 데이터 활용
 - **일정**: 2025년 3월 14일(금) ~ 2025년 3월 20일(목)
 - **사용 언어**: Python 3.11.9
 
@@ -67,7 +67,7 @@
     model_record = LinearRegression()   #생성
     model_record.fit(x_game, y_record)   #학습
     ```
-    - 독립변수의 평균값으로 2015년 기록을 예측
+    - 독립변수의 평균값으로 2025년 투타지표를 예측
     ```python
     #2025년 기록 예측
     pred_record = model_record.predict([df_kiaH[['G', 'GS', 'W', 'L']].mean().values])[0]  #평균
@@ -87,7 +87,7 @@
     model_winning_rate = LinearRegression() #생성
     model_winning_rate.fit(x, y)    #학습
     ```
-    - 위에서 예측한 2025년 기록으로 2025년 승률 예측
+    - 위에서 예측한 2025년 투타지표 기록으로 2025년 승률 예측
     ```python
     #예측 데이터
     pred_x = np.array([[
@@ -137,7 +137,7 @@
     model_record = LinearRegression()   #생성
     model_record.fit(x_game, y_record)   #학습
     ```
-    - 독립변수의 평균값으로 2015년 기록을 예측
+    - 독립변수의 평균값으로 2025년 투타지표를 예측
     ```python
     #2025년 기록 예측
     pred_record = model_record.predict([df_kia_weekdays[['G', 'GS', 'W', 'L']].mean().values])[0]  #평균
@@ -157,7 +157,7 @@
     model_winning_rate = LinearRegression() #생성
     model_winning_rate.fit(x, y)    #학습
     ```
-    - 위에서 예측한 2025년 기록으로 2025년 승률 예측
+    - 위에서 예측한 2025년 투타지표 기록으로 2025년 승률 예측
     ```python
     #예측 데이터
     pred_x = np.array([[
