@@ -56,7 +56,8 @@
 ![엘지트윈스의 구단별 승률(2015~2024)](graph_img/plot_lgtwinsWinRate2015to2024.png)
 
 ## 5. 분석 - 승률 예측
-- 컬럼 'W'(승 수) / 컬럼 'GS'(게임 수) * 100을 계산하여 승률 컬럼인 'winning_rate' 생성
+### (1) 승률 예측에 사용할 변수 선정
+- 컬럼 'W'(승) / 컬럼 'GS'(게임) * 100을 계산하여 승률 컬럼인 'winning_rate' 생성 → `df_kia['winning_rate'] = (df_kia['W'] / df_kia['GS'] *100).round(2)`
 - 승률에 영향을 미치는 주요 특성 파악
     - `RandomForestRegressor`를 활용하여 변수 중요도를 분석
     - 독립변수: `df_team.loc[:, 'S':'ERA']`
@@ -74,10 +75,65 @@
     selected_features = importance_df['Feature'].head(15).tolist()
     selected_features   #RS, OPS, ERA, RS9, AVG, R, S, IP, WHIP, ER, HR, SO, H, SF, OBP
     ```
-    - 상위 15개 특성을 투수/타자 항목으로 분류
+    - 상위 15개 특성 투수/타자 항목으로 분류
         - 투타조화 고려
-        - 각각 상위 5개를 선택해서 승률에 가장 영향을 미치는 요인으로 선정
-        |   분류    |   지표    |
+        - 각각 상위 5개를 선택해서 승률에 가장 영향을 미치는 요인으로 선정<br>
+        |분류|지표|
         |:---:|---|
         |투수|RS(득점지원), RS9(9이닝당 득점지원), R(득점), HR(홈런), H(안타), SF(희생플라이)|
         |타자|OPS(피OPS), ERA(평균자책점), AVG(피안타율), S(홀드), IP(이닝), WHIP(이닝당 출루 허용률), ER(자책점), SO(삼진), OBP(피출루율)|
+
+### (2) 승률 예측 과정
+#### 구장(홈·원정)별 승률 파악
+- **승률에 영향을 미치는 투타지표 예측**
+    - 구단에 따른 구장별 기록을 웹스크롤링해서 데이터프레임으로 변환한 후, 홈과 원정으로 데이터프레임을 분리
+    ```python
+    df_kiaH = df_kia.iloc[:10, 1:]  #홈
+    df_kiaA = df_kia.iloc[10:, 1:]  #원정
+    ```
+    - 독립변수: G, GS, W, L
+    - 종속변수: 선정한 투타 지표 10개(RS, RS9, R, HR, H, OPS, ERA, AVG, S, IP)
+    ```python
+    game = np.array(df_kiaH[['G', 'GS', 'W', 'L']]) #(출장, 게임, 승, 패)
+    record = np.array(df_kiaH.iloc[:, :-5]) #기록('RS', 'RS9', 'R', 'HR', 'H', 'OPS', 'ERA', 'AVG', 'S', 'IP')
+    winning_rate = np.array(df_kiaH['winning_rate']) #승률
+
+    x_game = game   #게임수
+    y_record = record   #기록('RS', 'RS9', 'R', 'HR', 'H', 'OPS', 'ERA', 'AVG', 'S', 'IP')
+    ```
+    - `LinearRegression`을을 활용하여 모델을 생성하고 학습
+    ```python
+    #기록 예측 모델
+    model_record = LinearRegression()   #생성
+    model_record.fit(x_game, y_record)   #학습
+    ```
+    - 독립변수의 평균값으로 2015년 기록을 예측
+    ```python
+    #2025년 기록 예측
+    pred_record = model_record.predict([df_kiaH[['G', 'GS', 'W', 'L']].mean().values])[0]  #평균
+    pred_RS, pred_RS9, pred_R, pred_HR, pred_H, pred_OPS, pred_ERA, pred_AVG, pred_S, pred_IP = pred_record
+    ```
+- **2025년 홈·원정 승률 파악**
+    - 독립변수: 선정한 투타지표 10개 (RS, RS9, HR, H, OPS, ERA, AVG, S, IP)
+    - 종속변수: winning_rate
+    ```python
+    x = record  #RS, RS9, HR, H, OPS, ERA, AVG, S, IP
+    y = winning_rate    #승률률
+    ```
+    - `LinearRegression`을 활용하여 모델을 생성하고 학습
+    ```python
+    model_winning_rate = LinearRegression() #생성
+    model_winning_rate.fit(x, y)    #학습
+    ```
+    - 위에서 예측한 2025년 기록으로 2025년 승률 예측
+    ```python
+    #예측 데이터
+    pred_x = np.array([[
+        pred_RS, pred_RS9, pred_R, pred_HR, pred_H,
+        pred_OPS, pred_ERA, pred_AVG, pred_S, pred_IP
+    ]])
+
+    #승률 예측
+    predicted_kiaH = model_winning_rate.predict(pred_x)[0].round(2)
+    print(f"2025년 승률 예측: {predicted_kiaH:}")   #2025년 승률 예측: 55.08
+    ```
